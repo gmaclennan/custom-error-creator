@@ -1,0 +1,47 @@
+import { createErrorClass, createErrorClasses } from "./index.js";
+
+const errors = createErrorClasses([
+  {
+    code: "NOT_FOUND",
+    message: "Resource {resource} not found",
+    status: 404,
+  },
+  {
+    code: "UNAUTHORIZED",
+    message: "Access denied",
+    status: 401,
+  },
+]);
+
+// Default message — params required and typed
+new errors.NOT_FOUND({ resource: "User" }); // ✅
+new errors.NOT_FOUND({ resource: "User" }, { cause: new Error() }); // ✅
+new errors.NOT_FOUND(); // ❌
+new errors.NOT_FOUND({ typo: "User" }); // ❌
+
+// Custom message — params optional, untyped
+new errors.NOT_FOUND("Custom message"); // ✅
+new errors.NOT_FOUND("{thing} gone", { thing: "Widget" }); // ✅
+new errors.NOT_FOUND("Gone", { cause: new Error() }); // ✅
+new errors.NOT_FOUND("{x} gone", { x: "y" }, { cause: new Error() }); // ✅
+
+// No params
+new errors.UNAUTHORIZED(); // ✅
+new errors.UNAUTHORIZED("Nope"); // ✅
+new errors.UNAUTHORIZED("Nope", { cause: new Error() }); // ✅
+
+// Instance types
+const e = new errors.NOT_FOUND({ resource: "User" });
+e.name; // "NotFound"
+e.code; // "NOT_FOUND"
+e.status; // 404
+e.message; // string
+e.cause; // unknown
+
+const Bad = createErrorClass({
+  code: "BAD",
+  message: "Failed because {cause}", // Cannot use 'cause' as a parameter name - only shows when constructing the error, not when creating the class
+  status: 500,
+});
+
+new Bad(); // ❌ Compile error: "Error: message template cannot use reserved parameter name: cause"
