@@ -2,7 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   createErrorClass,
-  createErrorClasses,
+  createErrorClassesByCode,
+  createErrorClassesByName,
   isCustomError,
 } from "../index.js";
 
@@ -335,9 +336,9 @@ describe("createErrorClass", () => {
   });
 });
 
-describe("createErrorClasses", () => {
+describe("createErrorClassesByCode", () => {
   it("creates multiple error classes keyed by code", () => {
-    const errors = createErrorClasses([
+    const errors = createErrorClassesByCode([
       { code: "NOT_FOUND", message: "Not found", status: 404 },
       { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
     ]);
@@ -346,7 +347,7 @@ describe("createErrorClasses", () => {
   });
 
   it("each class works independently", () => {
-    const errors = createErrorClasses([
+    const errors = createErrorClassesByCode([
       {
         code: "NOT_FOUND",
         message: "Resource {resource} not found",
@@ -369,7 +370,7 @@ describe("createErrorClasses", () => {
   });
 
   it("errors from different classes are not instanceof each other", () => {
-    const errors = createErrorClasses([
+    const errors = createErrorClassesByCode([
       { code: "NOT_FOUND", message: "Not found", status: 404 },
       { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
     ]);
@@ -382,7 +383,65 @@ describe("createErrorClasses", () => {
   it("throws at definition time when a definition uses {cause}", () => {
     assert.throws(
       () =>
-        createErrorClasses([
+        createErrorClassesByCode([
+          { code: "BAD", message: "Failed because {cause}", status: 500 },
+        ]),
+      {
+        message:
+          'Error definition "BAD" uses reserved parameter name "{cause}" in message template',
+      },
+    );
+  });
+});
+
+describe("createErrorClassesByName", () => {
+  it("creates multiple error classes keyed by PascalCase name", () => {
+    const errors = createErrorClassesByName([
+      { code: "NOT_FOUND", message: "Not found", status: 404 },
+      { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
+    ]);
+    assert.ok(errors.NotFound);
+    assert.ok(errors.Unauthorized);
+  });
+
+  it("each class works independently", () => {
+    const errors = createErrorClassesByName([
+      {
+        code: "NOT_FOUND",
+        message: "Resource {resource} not found",
+        status: 404,
+      },
+      { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
+    ]);
+
+    const notFound = new errors.NotFound({ resource: "User" });
+    assert.equal(notFound.message, "Resource User not found");
+    assert.equal(notFound.code, "NOT_FOUND");
+    assert.equal(notFound.status, 404);
+    assert.equal(notFound.name, "NotFound");
+
+    const unauthorized = new errors.Unauthorized();
+    assert.equal(unauthorized.message, "Access denied");
+    assert.equal(unauthorized.code, "UNAUTHORIZED");
+    assert.equal(unauthorized.status, 401);
+    assert.equal(unauthorized.name, "Unauthorized");
+  });
+
+  it("errors from different classes are not instanceof each other", () => {
+    const errors = createErrorClassesByName([
+      { code: "NOT_FOUND", message: "Not found", status: 404 },
+      { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
+    ]);
+
+    const notFound = new errors.NotFound();
+    assert.ok(notFound instanceof errors.NotFound);
+    assert.ok(!(notFound instanceof errors.Unauthorized));
+  });
+
+  it("throws at definition time when a definition uses {cause}", () => {
+    assert.throws(
+      () =>
+        createErrorClassesByName([
           { code: "BAD", message: "Failed because {cause}", status: 500 },
         ]),
       {

@@ -79,10 +79,18 @@ export function createErrorClass(definition) {
   return ErrorKlass;
 }
 
-export function createErrorClasses(definitions) {
+export function createErrorClassesByCode(definitions) {
   const classes = {};
   for (const def of definitions) {
     classes[def.code] = createErrorClass(def);
+  }
+  return classes;
+}
+
+export function createErrorClassesByName(definitions) {
+  const classes = {};
+  for (const def of definitions) {
+    classes[toPascalCase(def.code)] = createErrorClass(def);
   }
   return classes;
 }

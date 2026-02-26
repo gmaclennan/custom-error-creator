@@ -1,6 +1,10 @@
-import { createErrorClass, createErrorClasses } from "./index.js";
+import {
+  createErrorClass,
+  createErrorClassesByCode,
+  createErrorClassesByName,
+} from "./index.js";
 
-const errors = createErrorClasses([
+const errors = createErrorClassesByCode([
   {
     code: "NOT_FOUND",
     message: "Resource {resource} not found",
@@ -39,6 +43,16 @@ e.code; // "NOT_FOUND"
 e.status; // 404
 e.message; // string
 e.cause; // unknown
+
+// createErrorClassesByName — keyed by PascalCase name
+const byName = createErrorClassesByName([
+  {
+    code: "NOT_FOUND",
+    message: "Resource {resource} not found",
+    status: 404,
+  },
+]);
+new byName.NotFound({ resource: "User" }); // ✅
 
 // Cannot use 'cause' as a parameter name — errors at definition time
 const Bad = createErrorClass({

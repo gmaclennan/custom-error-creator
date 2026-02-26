@@ -1,7 +1,8 @@
 import { expectType, expectError, expectAssignable } from "tsd";
 import {
   createErrorClass,
-  createErrorClasses,
+  createErrorClassesByCode,
+  createErrorClassesByName,
   isCustomError,
   type ErrorDefinition,
 } from "./index.js";
@@ -64,10 +65,10 @@ new Unauthorized("Custom message", { cause: new Error() });
 expectError(new Unauthorized({ x: "y" }));
 
 // ──────────────────────────────────────────────
-// createErrorClasses — batch creation
+// createErrorClassesByCode — batch creation keyed by code
 // ──────────────────────────────────────────────
 
-const errors = createErrorClasses([
+const errors = createErrorClassesByCode([
   {
     code: "NOT_FOUND",
     message: "Resource {resource} not found",
@@ -140,9 +141,9 @@ expectError(
   }),
 );
 
-// Also for createErrorClasses
+// Also for createErrorClassesByCode
 expectError(
-  createErrorClasses([
+  createErrorClassesByCode([
     {
       code: "BAD",
       message: "Failed because {cause}",
@@ -177,6 +178,60 @@ new MultiParam({ a: "1", b: "2", c: "3" });
 expectError(new MultiParam({ a: "1", b: "2" }));
 // Extra param should error
 expectError(new MultiParam({ a: "1", b: "2", c: "3", d: "4" }));
+
+// ──────────────────────────────────────────────
+// createErrorClassesByName — batch creation keyed by PascalCase name
+// ──────────────────────────────────────────────
+
+const byName = createErrorClassesByName([
+  {
+    code: "NOT_FOUND",
+    message: "Resource {resource} not found",
+    status: 404,
+  },
+  {
+    code: "UNAUTHORIZED",
+    message: "Access denied",
+    status: 401,
+  },
+  {
+    code: "VALIDATION_ERROR",
+    message: "{field} is invalid: {reason}",
+    status: 400,
+  },
+]);
+
+// Each class exists and is constructible via PascalCase key
+const bn1 = new byName.NotFound({ resource: "User" });
+expectType<"NOT_FOUND">(bn1.code);
+expectType<404>(bn1.status);
+expectType<"NotFound">(bn1.name);
+
+const bn2 = new byName.Unauthorized();
+expectType<"UNAUTHORIZED">(bn2.code);
+expectType<401>(bn2.status);
+expectType<"Unauthorized">(bn2.name);
+
+const bn3 = new byName.ValidationError({ field: "email", reason: "too short" });
+expectType<"VALIDATION_ERROR">(bn3.code);
+expectType<400>(bn3.status);
+expectType<"ValidationError">(bn3.name);
+
+// Missing params should error for byName classes too
+expectError(new byName.NotFound());
+expectError(new byName.ValidationError());
+expectError(new byName.ValidationError({ field: "email" }));
+
+// Reserved param name should error
+expectError(
+  createErrorClassesByName([
+    {
+      code: "BAD",
+      message: "Failed because {cause}",
+      status: 500,
+    },
+  ]),
+);
 
 // ──────────────────────────────────────────────
 // Static properties on error classes

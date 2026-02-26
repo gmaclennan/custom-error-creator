@@ -40,35 +40,36 @@ type ErrorInstance<Def extends ErrorDefinition> = Error & {
   name: PascalFromScreamingSnake<Def["code"]>;
 };
 
-export type ErrorConstructor<Def extends ErrorDefinition> =
-  (HasParams<Def["message"]> extends true
-    ? {
-        // Default message — params required
-        new (params: ParamsFor<Def["message"]>): ErrorInstance<Def>;
-        new (
-          params: ParamsFor<Def["message"]>,
-          opts: ErrorOpts,
-        ): ErrorInstance<Def>;
-        // Custom message — params optional
-        new (
-          message: string,
-          params?: Record<string, string>,
-        ): ErrorInstance<Def>;
-        new (
-          message: string,
-          params: Record<string, string>,
-          opts: ErrorOpts,
-        ): ErrorInstance<Def>;
-        new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
-      }
-    : {
-        new (): ErrorInstance<Def>;
-        new (message: string): ErrorInstance<Def>;
-        new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
-      }) & {
-    code: Def["code"];
-    name: PascalFromScreamingSnake<Def["code"]>;
-  };
+export type ErrorConstructor<Def extends ErrorDefinition> = (HasParams<
+  Def["message"]
+> extends true
+  ? {
+      // Default message — params required
+      new (params: ParamsFor<Def["message"]>): ErrorInstance<Def>;
+      new (
+        params: ParamsFor<Def["message"]>,
+        opts: ErrorOpts,
+      ): ErrorInstance<Def>;
+      // Custom message — params optional
+      new (
+        message: string,
+        params?: Record<string, string>,
+      ): ErrorInstance<Def>;
+      new (
+        message: string,
+        params: Record<string, string>,
+        opts: ErrorOpts,
+      ): ErrorInstance<Def>;
+      new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
+    }
+  : {
+      new (): ErrorInstance<Def>;
+      new (message: string): ErrorInstance<Def>;
+      new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
+    }) & {
+  code: Def["code"];
+  name: PascalFromScreamingSnake<Def["code"]>;
+};
 
 type ValidateDefinition<Def extends ErrorDefinition> = ExtractParams<
   Def["message"]
@@ -91,12 +92,22 @@ type ValidateDefinitions<Defs extends ReadonlyArray<ErrorDefinition>> = {
     : Defs[K];
 };
 
-export function createErrorClasses<
+export function createErrorClassesByCode<
   const Defs extends ReadonlyArray<ErrorDefinition>,
 >(
   definitions: ValidateDefinitions<Defs>,
 ): {
   [D in Defs[number] as D["code"]]: ValidateDefinition<D>;
+};
+
+export function createErrorClassesByName<
+  const Defs extends ReadonlyArray<ErrorDefinition>,
+>(
+  definitions: ValidateDefinitions<Defs>,
+): {
+  [D in Defs[number] as PascalFromScreamingSnake<
+    D["code"]
+  >]: ValidateDefinition<D>;
 };
 
 export function isCustomError(

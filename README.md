@@ -58,14 +58,14 @@ const ValidationError = createErrorClass({
 });
 ```
 
-### `createErrorClasses(definitions)`
+### `createErrorClassesByCode(definitions)`
 
 Creates multiple error classes at once, returned as an object keyed by code.
 
 ```typescript
-import { createErrorClasses } from "typed-error-class";
+import { createErrorClassesByCode } from "typed-error-class";
 
-const errors = createErrorClasses([
+const errors = createErrorClassesByCode([
   { code: "NOT_FOUND", message: "Resource {resource} not found", status: 404 },
   { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
   {
@@ -78,6 +78,23 @@ const errors = createErrorClasses([
 throw new errors.NOT_FOUND({ resource: "User" });
 throw new errors.UNAUTHORIZED();
 throw new errors.VALIDATION_ERROR({ field: "email", reason: "too short" });
+```
+
+### `createErrorClassesByName(definitions)`
+
+Creates multiple error classes at once, returned as an object keyed by
+PascalCase name.
+
+```typescript
+import { createErrorClassesByName } from "typed-error-class";
+
+const errors = createErrorClassesByName([
+  { code: "NOT_FOUND", message: "Resource {resource} not found", status: 404 },
+  { code: "UNAUTHORIZED", message: "Access denied", status: 401 },
+]);
+
+throw new errors.NotFound({ resource: "User" });
+throw new errors.Unauthorized();
 ```
 
 ### `isCustomError(error)`
