@@ -221,6 +221,17 @@ describe("createErrorClass", () => {
       assert.equal(err.cause, cause);
     });
 
+    it("cause is non-enumerable", () => {
+      const Err = createErrorClass({
+        code: "WRAP",
+        message: "Wrapped",
+        status: 500,
+      });
+      const err = new Err("Wrapped", { cause: new Error("root") });
+      const descriptor = Object.getOwnPropertyDescriptor(err, "cause");
+      assert.equal(descriptor.enumerable, false);
+    });
+
     it("treats second arg as pure cause opts when only cause key is present", () => {
       const Err = createErrorClass({
         code: "PURE_OPTS",
