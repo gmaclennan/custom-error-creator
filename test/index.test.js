@@ -196,6 +196,42 @@ describe("createErrorClass", () => {
       const err = new Err();
       assert.equal(err.cause, undefined);
     });
+
+    it("passes through falsy cause values (null, 0, false, empty string)", () => {
+      const Err = createErrorClass({
+        code: "FALSY",
+        message: "Falsy cause",
+        status: 500,
+      });
+      for (const falsyCause of [null, 0, false, ""]) {
+        const err = new Err("msg", { cause: falsyCause });
+        assert.equal(err.cause, falsyCause, `cause: ${JSON.stringify(falsyCause)}`);
+      }
+    });
+
+    it("extracts cause and uses remaining keys as params when mixed in second arg", () => {
+      const Err = createErrorClass({
+        code: "MIXED",
+        message: "{x} happened",
+        status: 500,
+      });
+      const cause = new Error("root");
+      const err = new Err("{x} happened", { x: "something", cause });
+      assert.equal(err.message, "something happened");
+      assert.equal(err.cause, cause);
+    });
+
+    it("treats second arg as pure cause opts when only cause key is present", () => {
+      const Err = createErrorClass({
+        code: "PURE_OPTS",
+        message: "default",
+        status: 500,
+      });
+      const cause = new Error("root");
+      const err = new Err("custom", { cause });
+      assert.equal(err.message, "custom");
+      assert.equal(err.cause, cause);
+    });
   });
 
   describe("stack traces", () => {
@@ -322,6 +358,19 @@ describe("createErrorClasses", () => {
     assert.ok(notFound instanceof errors.NOT_FOUND);
     assert.ok(!(notFound instanceof errors.UNAUTHORIZED));
   });
+
+  it("throws at definition time when a definition uses {cause}", () => {
+    assert.throws(
+      () =>
+        createErrorClasses([
+          { code: "BAD", message: "Failed because {cause}", status: 500 },
+        ]),
+      {
+        message:
+          'Error definition "BAD" uses reserved parameter name "{cause}" in message template',
+      },
+    );
+  });
 });
 
 describe("isCustomError", () => {
@@ -357,5 +406,12 @@ describe("isCustomError", () => {
     const err = new Error("test");
     err.status = 500;
     assert.ok(!isCustomError(err));
+  });
+
+  it("returns true for a manually augmented Error with code and status (duck-typing)", () => {
+    const err = new Error("manual");
+    err.code = "MANUAL";
+    err.status = 500;
+    assert.ok(isCustomError(err));
   });
 });

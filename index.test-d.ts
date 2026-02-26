@@ -60,6 +60,9 @@ expectAssignable<Error>(ua1);
 new Unauthorized("Custom message");
 new Unauthorized("Custom message", { cause: new Error() });
 
+// Object arg should error for no-params errors
+expectError(new Unauthorized({ x: "y" }));
+
 // ──────────────────────────────────────────────
 // createErrorClasses — batch creation
 // ──────────────────────────────────────────────
@@ -135,6 +138,17 @@ expectError(
     message: "Failed because {cause}",
     status: 500,
   } as const),
+);
+
+// Also for createErrorClasses
+expectError(
+  createErrorClasses([
+    {
+      code: "BAD",
+      message: "Failed because {cause}",
+      status: 500,
+    },
+  ] as const),
 );
 
 // ──────────────────────────────────────────────

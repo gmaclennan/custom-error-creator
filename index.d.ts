@@ -33,15 +33,6 @@ export type ErrorDefinition<TMessage extends string = string> = {
   status: number;
 };
 
-type ErrorClassFor<Def extends ErrorDefinition> = new (
-  message?: string,
-  params?: ParamsFor<Def["message"]>,
-) => Error & {
-  code: Def["code"];
-  status: Def["status"];
-  name: PascalFromScreamingSnake<Def["code"]>;
-};
-
 type ErrorOpts = { cause?: unknown };
 
 type ErrorInstance<Def extends ErrorDefinition> = Error & {
