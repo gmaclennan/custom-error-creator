@@ -10,6 +10,13 @@ type PascalFromScreamingSnake<T extends string> =
 
 type ForbiddenParamKeys = "cause";
 
+type ValidateMessage<T extends string> =
+  string extends T
+    ? T
+    : ExtractParams<T> & ForbiddenParamKeys extends never
+      ? T
+      : `Error: message template cannot use reserved parameter name 'cause'`;
+
 type ParamsFor<T extends string> =
   ExtractParams<T> extends never
     ? never
@@ -78,13 +85,19 @@ type ValidateDefinition<Def extends ErrorDefinition> = ExtractParams<
   : "Error: message template cannot use reserved parameter name 'cause'";
 
 export function createErrorClass<const Def extends ErrorDefinition>(
-  def: Def,
+  def: Def & { message: ValidateMessage<Def["message"]> },
 ): ValidateDefinition<Def>;
+
+type ValidateDefinitions<Defs extends ReadonlyArray<ErrorDefinition>> = {
+  [K in keyof Defs]: Defs[K] extends ErrorDefinition
+    ? Defs[K] & { message: ValidateMessage<Defs[K]["message"]> }
+    : Defs[K];
+};
 
 export function createErrorClasses<
   const Defs extends ReadonlyArray<ErrorDefinition>,
 >(
-  definitions: Defs,
+  definitions: Defs & ValidateDefinitions<Defs>,
 ): {
   [D in Defs[number] as D["code"]]: ValidateDefinition<D>;
 };
