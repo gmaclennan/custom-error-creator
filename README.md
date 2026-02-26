@@ -8,8 +8,7 @@ Create typed, structured error classes from simple definitions.
 
 ## Why?
 
-Experimental module (as-yet unpublished) that lets you define errors
-declaratively and get back proper classes with:
+Lets you define errors declaratively and get back proper classes with:
 
 - **Typed error codes** — catch and handle errors by code, not by sniffing
   message strings
@@ -24,7 +23,8 @@ declaratively and get back proper classes with:
 - **Standard `cause` chaining** — wrap underlying errors using the ES2022
   `cause` option
 
-Could be a terrible idea, but it was an itch I had to scratch.
+I found myself using similar patterns for error handling in multiple projects,
+and this module encapsulates the common boilerplate into a simple, reusable API.
 
 ## Install
 
