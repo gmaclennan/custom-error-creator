@@ -142,6 +142,22 @@ err.stack; // stack trace pointing at the throw site
 err.cause; // underlying error, if provided
 ```
 
+## Static class properties
+
+Error classes also expose `code` and `name` as static properties, useful for
+comparisons without instantiating:
+
+```typescript
+const NotFound = createErrorClass({
+  code: "NOT_FOUND",
+  message: "Resource {resource} not found",
+  status: 404,
+});
+
+NotFound.code; // "NOT_FOUND"
+NotFound.name; // "NotFound"
+```
+
 ## Error handling patterns
 
 ### By code

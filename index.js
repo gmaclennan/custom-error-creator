@@ -74,6 +74,7 @@ export function createErrorClass(definition) {
   };
 
   Object.defineProperty(ErrorKlass, "name", { value: className });
+  ErrorKlass.code = code;
 
   return ErrorKlass;
 }

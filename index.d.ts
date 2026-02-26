@@ -10,12 +10,11 @@ type PascalFromScreamingSnake<T extends string> =
 
 type ForbiddenParamKeys = "cause";
 
-type ValidateMessage<T extends string> =
-  string extends T
+type ValidateMessage<T extends string> = string extends T
+  ? T
+  : ExtractParams<T> & ForbiddenParamKeys extends never
     ? T
-    : ExtractParams<T> & ForbiddenParamKeys extends never
-      ? T
-      : `Error: message template cannot use reserved parameter name 'cause'`;
+    : `Error: message template cannot use reserved parameter name 'cause'`;
 
 type ParamsFor<T extends string> =
   ExtractParams<T> extends never
@@ -42,7 +41,7 @@ type ErrorInstance<Def extends ErrorDefinition> = Error & {
 };
 
 export type ErrorConstructor<Def extends ErrorDefinition> =
-  HasParams<Def["message"]> extends true
+  (HasParams<Def["message"]> extends true
     ? {
         // Default message — params required
         new (params: ParamsFor<Def["message"]>): ErrorInstance<Def>;
@@ -66,7 +65,10 @@ export type ErrorConstructor<Def extends ErrorDefinition> =
         new (): ErrorInstance<Def>;
         new (message: string): ErrorInstance<Def>;
         new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
-      };
+      }) & {
+    code: Def["code"];
+    name: PascalFromScreamingSnake<Def["code"]>;
+  };
 
 type ValidateDefinition<Def extends ErrorDefinition> = ExtractParams<
   Def["message"]

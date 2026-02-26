@@ -177,3 +177,10 @@ new MultiParam({ a: "1", b: "2", c: "3" });
 expectError(new MultiParam({ a: "1", b: "2" }));
 // Extra param should error
 expectError(new MultiParam({ a: "1", b: "2", c: "3", d: "4" }));
+
+// ──────────────────────────────────────────────
+// Static properties on error classes
+// ──────────────────────────────────────────────
+
+expectType<"NOT_FOUND">(NotFound.code);
+expectType<"NotFound">(NotFound.name);

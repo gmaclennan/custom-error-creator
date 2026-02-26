@@ -63,6 +63,15 @@ describe("createErrorClass", () => {
       assert.equal(NotFound.name, "NotFound");
     });
 
+    it("exposes code as a static property on the class", () => {
+      const NotFound = createErrorClass({
+        code: "NOT_FOUND",
+        message: "Not found",
+        status: 404,
+      });
+      assert.equal(NotFound.code, "NOT_FOUND");
+    });
+
     it("uses the default message when no arguments given", () => {
       const Err = createErrorClass({
         code: "FAIL",
