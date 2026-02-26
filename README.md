@@ -37,7 +37,7 @@ const NotFound = createErrorClass({
   code: "NOT_FOUND",
   message: "Resource {resource} not found",
   status: 404,
-} as const);
+});
 
 throw new NotFound({ resource: "User" });
 // NotFound: Resource User not found
@@ -60,8 +60,7 @@ const ValidationError = createErrorClass({
 
 ### `createErrorClasses(definitions)`
 
-Creates multiple error classes at once, returned as an object keyed by
-PascalCase name.
+Creates multiple error classes at once, returned as an object keyed by code.
 
 ```typescript
 import { createErrorClasses } from "typed-error-class";
@@ -121,7 +120,7 @@ const Unauthorized = createErrorClass({
   code: "UNAUTHORIZED",
   message: "Access denied",
   status: 401,
-} as const);
+});
 
 new Unauthorized();
 new Unauthorized("Custom message");
@@ -188,18 +187,17 @@ compatible with all standard tooling.
 ## Reserved parameter names
 
 The parameter name `cause` is reserved and cannot be used in message templates.
-This is enforced at both compile time and runtime, however at compile time it
-will only error when constructing the error, not when defining it:
+This is enforced at both compile time and runtime:
 
 ```typescript
-// Does not show any error
+// ❌ Compile error at definition time
 const Bad = createErrorClass({
   code: "BAD",
   message: "Failed because {cause}",
   status: 500,
-} as const);
+});
 
-new Bad(); // ❌ Compile error: "Error: message template cannot use reserved parameter name: cause"
+// ❌ Runtime error — throws immediately
 ```
 
 ## Type safety
@@ -211,7 +209,7 @@ const NotFound = createErrorClass({
   code: "NOT_FOUND",
   message: "Resource {resource} not found",
   status: 404,
-} as const);
+});
 
 new NotFound({ resource: "User" }); // ✅
 new NotFound({ resorce: "User" }); // ❌ typo caught at compile time
