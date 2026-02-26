@@ -76,19 +76,23 @@ type ValidateDefinition<Def extends ErrorDefinition> = ExtractParams<
   : "Error: message template cannot use reserved parameter name 'cause'";
 
 export function createErrorClass<const Def extends ErrorDefinition>(
-  def: Def & { message: ValidateMessage<Def["message"]> },
+  def: ExtractParams<Def["message"]> & ForbiddenParamKeys extends never
+    ? Def
+    : ErrorDefinition & { message: ValidateMessage<Def["message"]> },
 ): ValidateDefinition<Def>;
 
 type ValidateDefinitions<Defs extends ReadonlyArray<ErrorDefinition>> = {
   [K in keyof Defs]: Defs[K] extends ErrorDefinition
-    ? Defs[K] & { message: ValidateMessage<Defs[K]["message"]> }
+    ? ExtractParams<Defs[K]["message"]> & ForbiddenParamKeys extends never
+      ? Defs[K]
+      : ErrorDefinition & { message: ValidateMessage<Defs[K]["message"]> }
     : Defs[K];
 };
 
 export function createErrorClasses<
   const Defs extends ReadonlyArray<ErrorDefinition>,
 >(
-  definitions: Defs & ValidateDefinitions<Defs>,
+  definitions: ValidateDefinitions<Defs>,
 ): {
   [D in Defs[number] as D["code"]]: ValidateDefinition<D>;
 };

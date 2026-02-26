@@ -16,7 +16,9 @@ const errors = createErrorClasses([
 // Default message — params required and typed
 new errors.NOT_FOUND({ resource: "User" }); // ✅
 new errors.NOT_FOUND({ resource: "User" }, { cause: new Error() }); // ✅
+// @ts-expect-error Missing params — should error
 new errors.NOT_FOUND(); // ❌
+// @ts-expect-error Wrong param name — should error
 new errors.NOT_FOUND({ typo: "User" }); // ❌
 
 // Custom message — params optional, untyped
@@ -38,9 +40,10 @@ e.status; // 404
 e.message; // string
 e.cause; // unknown
 
-// @ts-expect-error Cannot use 'cause' as a parameter name — errors at definition time
+// Cannot use 'cause' as a parameter name — errors at definition time
 const Bad = createErrorClass({
   code: "BAD",
+  // @ts-expect-error Cannot use 'cause' as a parameter name
   message: "Failed because {cause}",
   status: 500,
 });
