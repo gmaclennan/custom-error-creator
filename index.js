@@ -40,16 +40,27 @@ export function createErrorClass(definition) {
       const message =
         typeof messageOrParams === "string" ? messageOrParams : defaultMessage;
 
-      const params =
-        typeof messageOrParams === "object" && messageOrParams !== null
-          ? messageOrParams
-          : typeof paramsOrOpts === "object" &&
-              paramsOrOpts !== null &&
-              !("cause" in paramsOrOpts)
-            ? paramsOrOpts
-            : undefined;
+      let params, cause;
 
-      const cause = opts?.cause ?? paramsOrOpts?.cause;
+      if (typeof messageOrParams === "object" && messageOrParams !== null) {
+        // First arg is params object: new Err(params) or new Err(params, opts)
+        params = messageOrParams;
+        cause = paramsOrOpts?.cause;
+      } else if (typeof paramsOrOpts === "object" && paramsOrOpts !== null) {
+        if (opts !== undefined) {
+          // Three-arg form: new Err("msg", params, opts)
+          params = paramsOrOpts;
+          cause = opts.cause;
+        } else if ("cause" in paramsOrOpts) {
+          // Has cause key — extract it, use remaining keys as params
+          const { cause: extractedCause, ...rest } = paramsOrOpts;
+          cause = extractedCause;
+          params = Object.keys(rest).length > 0 ? rest : undefined;
+        } else {
+          // Pure params object
+          params = paramsOrOpts;
+        }
+      }
 
       super(
         params ? interpolate(message, params) : message,

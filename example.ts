@@ -38,10 +38,9 @@ e.status; // 404
 e.message; // string
 e.cause; // unknown
 
+// @ts-expect-error Cannot use 'cause' as a parameter name — errors at definition time
 const Bad = createErrorClass({
   code: "BAD",
-  message: "Failed because {cause}", // Cannot use 'cause' as a parameter name - only shows when constructing the error, not when creating the class
+  message: "Failed because {cause}",
   status: 500,
-});
-
-new Bad(); // ❌ Compile error: "Error: message template cannot use reserved parameter name: cause"
+} as const);
