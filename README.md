@@ -1,5 +1,9 @@
 # custom-error-creator
 
+[![npm version](https://img.shields.io/npm/v/custom-error-creator.svg)](https://www.npmjs.com/package/custom-error-creator)
+[![GitHub CI](https://github.com/gmaclennan/custom-error-creator/actions/workflows/test.yml/badge.svg)](https://github.com/gmaclennan/custom-error-creator/actions/workflows/test.yml)
+[![bundle size](https://deno.bundlejs.com/badge?q=custom-error-creator&treeshake=[*])](https://bundlejs.com/?q=custom-error-creator&treeshake=%5B*%5D)
+
 Create typed, structured error classes from simple definitions.
 
 ## Why?
