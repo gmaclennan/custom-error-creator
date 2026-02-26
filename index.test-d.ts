@@ -14,7 +14,7 @@ const NotFound = createErrorClass({
   code: "NOT_FOUND",
   message: "Resource {resource} not found",
   status: 404,
-} as const);
+});
 
 // Params required — typed and checked at compile time
 const nf1 = new NotFound({ resource: "User" });
@@ -48,7 +48,7 @@ const Unauthorized = createErrorClass({
   code: "UNAUTHORIZED",
   message: "Access denied",
   status: 401,
-} as const);
+});
 
 // All valid signatures
 const ua1 = new Unauthorized();
@@ -83,7 +83,7 @@ const errors = createErrorClasses([
     message: "{field} is invalid: {reason}",
     status: 400,
   },
-] as const);
+]);
 
 // Each class exists and is constructible
 const e1 = new errors.NOT_FOUND({ resource: "User" });
@@ -114,7 +114,7 @@ const InternalServerError = createErrorClass({
   code: "INTERNAL_SERVER_ERROR",
   message: "Internal server error",
   status: 500,
-} as const);
+});
 const ise = new InternalServerError();
 expectType<"InternalServerError">(ise.name);
 expectType<"INTERNAL_SERVER_ERROR">(ise.code);
@@ -123,7 +123,7 @@ const BadRequest = createErrorClass({
   code: "BAD_REQUEST",
   message: "Bad request",
   status: 400,
-} as const);
+});
 const br = new BadRequest();
 expectType<"BadRequest">(br.name);
 
@@ -137,7 +137,7 @@ expectError(
     code: "BAD",
     message: "Failed because {cause}",
     status: 500,
-  } as const),
+  }),
 );
 
 // Also for createErrorClasses
@@ -148,7 +148,7 @@ expectError(
       message: "Failed because {cause}",
       status: 500,
     },
-  ] as const),
+  ]),
 );
 
 // ──────────────────────────────────────────────
@@ -170,7 +170,7 @@ const MultiParam = createErrorClass({
   code: "MULTI",
   message: "{a} and {b} and {c}",
   status: 500,
-} as const);
+});
 
 new MultiParam({ a: "1", b: "2", c: "3" });
 // Missing one param should error
