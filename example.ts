@@ -43,4 +43,4 @@ const Bad = createErrorClass({
   code: "BAD",
   message: "Failed because {cause}",
   status: 500,
-} as const);
+});
