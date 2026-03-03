@@ -29,13 +29,13 @@ and this module encapsulates the common boilerplate into a simple, reusable API.
 ## Install
 
 ```
-npm install typed-error-class
+npm install custom-error-creator
 ```
 
 ## Quick start
 
 ```typescript
-import { createErrorClass } from "typed-error-class";
+import { createErrorClass } from "custom-error-creator";
 
 const NotFound = createErrorClass({
   code: "NOT_FOUND",
@@ -67,7 +67,7 @@ const ValidationError = createErrorClass({
 Creates multiple error classes at once, returned as an object keyed by code.
 
 ```typescript
-import { createErrorClassesByCode } from "typed-error-class";
+import { createErrorClassesByCode } from "custom-error-creator";
 
 const errors = createErrorClassesByCode([
   { code: "NOT_FOUND", message: "Resource {resource} not found", status: 404 },
@@ -90,7 +90,7 @@ Creates multiple error classes at once, returned as an object keyed by
 PascalCase name.
 
 ```typescript
-import { createErrorClassesByName } from "typed-error-class";
+import { createErrorClassesByName } from "custom-error-creator";
 
 const errors = createErrorClassesByName([
   { code: "NOT_FOUND", message: "Resource {resource} not found", status: 404 },
