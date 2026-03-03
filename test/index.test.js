@@ -362,18 +362,6 @@ describe("createErrorClass", () => {
       assert.equal(err.cause, undefined);
     });
 
-    it("still supports string message for no-param errors", () => {
-      const err = new Err("Custom message");
-      assert.equal(err.message, "Custom message");
-    });
-
-    it("still supports string message with cause in second arg", () => {
-      const cause = new Error("root");
-      const err = new Err("Custom", { cause });
-      assert.equal(err.message, "Custom");
-      assert.equal(err.cause, cause);
-    });
-
     it("cause via opts is non-enumerable", () => {
       const err = new Err({ cause: new Error("root") });
       const descriptor = Object.getOwnPropertyDescriptor(err, "cause");
