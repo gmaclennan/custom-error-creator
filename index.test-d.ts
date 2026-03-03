@@ -239,3 +239,38 @@ expectError(
 
 expectType<"NOT_FOUND">(NotFound.code);
 expectType<"NotFound">(NotFound.name);
+
+// ──────────────────────────────────────────────
+// Non-string template parameters
+// ──────────────────────────────────────────────
+
+const NumParam = createErrorClass({
+  code: "NUM_ERR",
+  message: "Found {count} items",
+  status: 500,
+});
+
+// Number params accepted
+new NumParam({ count: 42 });
+// Object params accepted
+new NumParam({ count: { nested: true } });
+// Boolean params accepted
+new NumParam({ count: true });
+// null/undefined accepted
+new NumParam({ count: null });
+new NumParam({ count: undefined });
+
+// Mixed types in multi-param template
+const MixedParam = createErrorClass({
+  code: "MIXED_ERR",
+  message: "{name} has {count} items",
+  status: 500,
+});
+new MixedParam({ name: "Alice", count: 42 });
+new MixedParam({ name: "Alice", count: [1, 2, 3] });
+
+// String params still accepted (backward compatible)
+new MixedParam({ name: "Alice", count: "many" });
+
+// Custom message with non-string params
+new NumParam("custom {val}", { val: 99 });
