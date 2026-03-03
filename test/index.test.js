@@ -318,6 +318,192 @@ describe("createErrorClass", () => {
     });
   });
 
+  describe("non-string template parameters", () => {
+    it("interpolates number params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Found {count} items",
+        status: 500,
+      });
+      const err = new Err({ count: 42 });
+      assert.equal(err.message, "Found 42 items");
+    });
+
+    it("interpolates boolean params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Active: {flag}",
+        status: 500,
+      });
+      assert.equal(new Err({ flag: true }).message, "Active: true");
+      assert.equal(new Err({ flag: false }).message, "Active: false");
+    });
+
+    it("interpolates null and undefined params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Value is {val}",
+        status: 500,
+      });
+      assert.equal(new Err({ val: null }).message, "Value is null");
+      assert.equal(new Err({ val: undefined }).message, "Value is undefined");
+    });
+
+    it("interpolates object params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: { x: 1, y: "hello" } });
+      assert.equal(err.message, "Data: { x: 1, y: 'hello' }");
+    });
+
+    it("interpolates array params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Items: {items}",
+        status: 500,
+      });
+      const err = new Err({ items: [1, 2, 3] });
+      assert.equal(err.message, "Items: [ 1, 2, 3 ]");
+    });
+
+    it("interpolates Error as param (not cause)", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Wrapped: {inner}",
+        status: 500,
+      });
+      const err = new Err({ inner: new TypeError("bad type") });
+      assert.equal(err.message, "Wrapped: TypeError: bad type");
+    });
+
+    it("interpolates nested objects with depth limiting", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({
+        data: { a: { b: { c: { d: { e: { f: 1 } } } } } },
+      });
+      assert.equal(
+        err.message,
+        "Data: { a: { b: { c: { d: { e: {…} } } } } }",
+      );
+    });
+
+    it("interpolates circular references", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const obj = { x: 1 };
+      obj.self = obj;
+      const err = new Err({ data: obj });
+      assert.equal(err.message, "Data: { x: 1, self: [Circular] }");
+    });
+
+    it("handles shared (non-circular) references correctly", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const shared = { val: 1 };
+      const err = new Err({ data: [shared, shared] });
+      assert.equal(err.message, "Data: [ { val: 1 }, { val: 1 } ]");
+    });
+
+    it("interpolates Date params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "At: {when}",
+        status: 500,
+      });
+      const d = new Date("2024-01-15T10:30:00Z");
+      const err = new Err({ when: d });
+      assert.equal(err.message, "At: 2024-01-15T10:30:00.000Z");
+    });
+
+    it("handles Invalid Date", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "At: {when}",
+        status: 500,
+      });
+      const err = new Err({ when: new Date("invalid") });
+      assert.equal(err.message, "At: Invalid Date");
+    });
+
+    it("interpolates Map params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({
+        data: new Map([
+          ["a", 1],
+          ["b", 2],
+        ]),
+      });
+      assert.equal(err.message, "Data: Map(2) { 'a' => 1, 'b' => 2 }");
+    });
+
+    it("interpolates Set params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: new Set([1, 2, 3]) });
+      assert.equal(err.message, "Data: Set(3) { 1, 2, 3 }");
+    });
+
+    it("handles mixed types in one template", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "{name} has {count} items: {items}",
+        status: 500,
+      });
+      const err = new Err({ name: "Alice", count: 3, items: [1, 2, 3] });
+      assert.equal(err.message, "Alice has 3 items: [ 1, 2, 3 ]");
+    });
+
+    it("string params are NOT quoted (backward compatible)", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Hello {name}",
+        status: 500,
+      });
+      const err = new Err({ name: "World" });
+      assert.equal(err.message, "Hello World");
+    });
+
+    it("works with custom message and non-string params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "default {x}",
+        status: 500,
+      });
+      const err = new Err("{val} items", { val: 42 });
+      assert.equal(err.message, "42 items");
+    });
+
+    it("interpolates RegExp params", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Pattern: {pattern}",
+        status: 500,
+      });
+      const err = new Err({ pattern: /foo|bar/gi });
+      assert.equal(err.message, "Pattern: /foo|bar/gi");
+    });
+  });
+
   describe("reserved parameter validation", () => {
     it("throws at definition time when message uses {cause}", () => {
       assert.throws(

@@ -6,9 +6,58 @@ function toPascalCase(screamingSnake) {
     .join("");
 }
 
+function inspect(value, depth = 4, seen = new WeakSet()) {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  const t = typeof value;
+  if (t === "string") return `'${value}'`;
+  if (t === "number" || t === "boolean") return String(value);
+  if (t === "symbol") return value.toString();
+  if (t === "bigint") return `${value}n`;
+  if (t === "function") return `[Function: ${value.name || "anonymous"}]`;
+  // Non-recursive object types — always show regardless of depth
+  if (value instanceof Date)
+    return isNaN(value.getTime()) ? "Invalid Date" : value.toISOString();
+  if (value instanceof RegExp) return value.toString();
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+  // Depth/circular checks for recursive types
+  if (depth < 0) return Array.isArray(value) ? "[…]" : "{…}";
+  if (seen.has(value)) return "[Circular]";
+  seen.add(value);
+  let result;
+  if (Array.isArray(value)) {
+    result =
+      value.length === 0
+        ? "[]"
+        : `[ ${value.map((v) => inspect(v, depth - 1, seen)).join(", ")} ]`;
+  } else if (value instanceof Map) {
+    result =
+      value.size === 0
+        ? "Map(0) {}"
+        : `Map(${value.size}) { ${[...value].map(([k, v]) => `${inspect(k, depth - 1, seen)} => ${inspect(v, depth - 1, seen)}`).join(", ")} }`;
+  } else if (value instanceof Set) {
+    result =
+      value.size === 0
+        ? "Set(0) {}"
+        : `Set(${value.size}) { ${[...value].map((v) => inspect(v, depth - 1, seen)).join(", ")} }`;
+  } else {
+    const keys = Object.keys(value);
+    result =
+      keys.length === 0
+        ? "{}"
+        : `{ ${keys.map((k) => `${k}: ${inspect(value[k], depth - 1, seen)}`).join(", ")} }`;
+  }
+  seen.delete(value);
+  return result;
+}
+
 function interpolate(template, params) {
   return template.replace(/\{(\w+)\}/g, (match, key) =>
-    key in params ? params[key] : match,
+    key in params
+      ? typeof params[key] === "string"
+        ? params[key]
+        : inspect(params[key])
+      : match,
   );
 }
 

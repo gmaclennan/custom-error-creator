@@ -20,7 +20,7 @@ type ParamsFor<T extends string> =
   ExtractParams<T> extends never
     ? never
     : ExtractParams<T> & ForbiddenParamKeys extends never
-      ? Record<ExtractParams<T>, string>
+      ? Record<ExtractParams<T>, unknown>
       : never; // <- causes error when forbidden keys are used
 
 type HasParams<T extends string> =
@@ -53,11 +53,11 @@ export type ErrorConstructor<Def extends ErrorDefinition> = (HasParams<
       // Custom message — params optional
       new (
         message: string,
-        params?: Record<string, string>,
+        params?: Record<string, unknown>,
       ): ErrorInstance<Def>;
       new (
         message: string,
-        params: Record<string, string>,
+        params: Record<string, unknown>,
         opts: ErrorOpts,
       ): ErrorInstance<Def>;
       new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
