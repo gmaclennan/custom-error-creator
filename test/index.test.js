@@ -318,6 +318,69 @@ describe("createErrorClass", () => {
     });
   });
 
+  describe("ErrorOpts as first argument for no-param errors", () => {
+    const Err = createErrorClass({
+      code: "SIMPLE",
+      message: "Something failed",
+      status: 500,
+    });
+
+    it("accepts { cause } as first argument", () => {
+      const cause = new Error("root cause");
+      const err = new Err({ cause });
+      assert.equal(err.message, "Something failed");
+      assert.equal(err.cause, cause);
+    });
+
+    it("accepts { cause: null } preserving falsy cause", () => {
+      const err = new Err({ cause: null });
+      assert.equal(err.message, "Something failed");
+      assert.equal(err.cause, null);
+    });
+
+    it("accepts { cause: undefined } — no cause set", () => {
+      const err = new Err({ cause: undefined });
+      assert.equal(err.message, "Something failed");
+      assert.equal(err.cause, undefined);
+    });
+
+    it("accepts {} — no cause set, uses default message", () => {
+      const err = new Err({});
+      assert.equal(err.message, "Something failed");
+      assert.equal(err.cause, undefined);
+    });
+
+    it("does not affect parameterized errors", () => {
+      const ParamErr = createErrorClass({
+        code: "PARAM_ERR",
+        message: "Missing {field}",
+        status: 400,
+      });
+      // For parameterized errors, first object arg is always params
+      const err = new ParamErr({ field: "name" });
+      assert.equal(err.message, "Missing name");
+      assert.equal(err.cause, undefined);
+    });
+
+    it("still supports string message for no-param errors", () => {
+      const err = new Err("Custom message");
+      assert.equal(err.message, "Custom message");
+    });
+
+    it("still supports string message with cause in second arg", () => {
+      const cause = new Error("root");
+      const err = new Err("Custom", { cause });
+      assert.equal(err.message, "Custom");
+      assert.equal(err.cause, cause);
+    });
+
+    it("cause via opts is non-enumerable", () => {
+      const err = new Err({ cause: new Error("root") });
+      const descriptor = Object.getOwnPropertyDescriptor(err, "cause");
+      assert.equal(descriptor.enumerable, false);
+    });
+  });
+
   describe("reserved parameter validation", () => {
     it("throws at definition time when message uses {cause}", () => {
       assert.throws(

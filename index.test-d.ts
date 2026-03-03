@@ -239,3 +239,30 @@ expectError(
 
 expectType<"NOT_FOUND">(NotFound.code);
 expectType<"NotFound">(NotFound.name);
+
+// ──────────────────────────────────────────────
+// ErrorOpts as first parameter (no-param errors)
+// ──────────────────────────────────────────────
+
+const SimpleErr = createErrorClass({
+  code: "SIMPLE",
+  message: "Something failed",
+  status: 500,
+});
+
+// ErrorOpts as first arg — should compile for no-param errors
+new SimpleErr({ cause: new Error("root") });
+new SimpleErr({ cause: "string cause" });
+new SimpleErr({ cause: null });
+new SimpleErr({ cause: 42 });
+
+// Empty object also valid (cause is optional in ErrorOpts)
+new SimpleErr({});
+
+// Should NOT compile for parameterized errors (object treated as params, wrong shape)
+const ParamErrOpts = createErrorClass({
+  code: "PARAM_ERR",
+  message: "Missing {field}",
+  status: 400,
+});
+expectError(new ParamErrOpts({ cause: new Error() }));
