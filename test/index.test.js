@@ -502,6 +502,205 @@ describe("createErrorClass", () => {
       const err = new Err({ pattern: /foo|bar/gi });
       assert.equal(err.message, "Pattern: /foo|bar/gi");
     });
+
+    it("truncates large arrays", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: Array.from({ length: 100 }, (_, i) => i) });
+      assert.ok(err.message.includes("… 50 more"));
+      assert.ok(!err.message.includes("99"));
+    });
+
+    it("truncates objects with many keys", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const obj = {};
+      for (let i = 0; i < 100; i++) obj[`k${i}`] = i;
+      const err = new Err({ data: obj });
+      assert.ok(err.message.includes("… 50 more"));
+    });
+
+    it("truncates large Maps", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const map = new Map(
+        Array.from({ length: 100 }, (_, i) => [`key${i}`, i]),
+      );
+      const err = new Err({ data: map });
+      assert.ok(err.message.startsWith("Data: Map(100) { "));
+      assert.ok(err.message.includes("… 50 more"));
+    });
+
+    it("truncates large Sets", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const set = new Set(Array.from({ length: 100 }, (_, i) => i));
+      const err = new Err({ data: set });
+      assert.ok(err.message.startsWith("Data: Set(100) { "));
+      assert.ok(err.message.includes("… 50 more"));
+    });
+
+    it("truncates very long nested strings", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: { text: "x".repeat(1000) } });
+      assert.ok(err.message.length < 500);
+      assert.ok(err.message.includes("…'"));
+    });
+
+    it("does not crash on getter that throws", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const obj = {};
+      Object.defineProperty(obj, "boom", {
+        get() {
+          throw new Error("getter exploded");
+        },
+        enumerable: true,
+      });
+      const err = new Err({ data: obj });
+      assert.equal(err.message, "Data: {…}");
+    });
+
+    it("does not crash on object with throwing toString", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const obj = {
+        toString() {
+          throw new Error("boom");
+        },
+      };
+      const err = new Err({ data: obj });
+      assert.ok(err.message.startsWith("Data: "));
+    });
+
+    it("does not crash on Proxy with throwing traps", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const proxy = new Proxy(
+        {},
+        {
+          ownKeys() {
+            throw new Error("trap exploded");
+          },
+        },
+      );
+      const err = new Err({ data: proxy });
+      assert.equal(err.message, "Data: {…}");
+    });
+
+    it("does not crash on Date with overridden toISOString", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "At: {when}",
+        status: 500,
+      });
+      const d = new Date();
+      d.toISOString = () => {
+        throw new Error("boom");
+      };
+      const err = new Err({ when: d });
+      assert.equal(err.message, "At: {…}");
+    });
+
+    it("does not crash on RegExp with overridden toString", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const rx = /test/;
+      rx.toString = () => {
+        throw new Error("boom");
+      };
+      const err = new Err({ data: rx });
+      assert.equal(err.message, "Data: {…}");
+    });
+
+    it("does not crash on Error with throwing name getter", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const e = new Error("inner");
+      Object.defineProperty(e, "name", {
+        get() {
+          throw new Error("boom");
+        },
+      });
+      const err = new Err({ data: e });
+      assert.equal(err.message, "Data: {…}");
+    });
+
+    it("does not crash on Map with forEach that throws", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const m = new Map([["a", 1]]);
+      m.forEach = () => {
+        throw new Error("boom");
+      };
+      const err = new Err({ data: m });
+      assert.equal(err.message, "Data: {…}");
+    });
+
+    it("renders TypedArrays with type name and values", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: new Uint8Array([1, 2, 3]) });
+      assert.equal(err.message, "Data: Uint8Array([ 1, 2, 3 ])");
+    });
+
+    it("renders empty TypedArrays", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: new Float64Array(0) });
+      assert.equal(err.message, "Data: Float64Array([])");
+    });
+
+    it("truncates large TypedArrays", () => {
+      const Err = createErrorClass({
+        code: "ERR",
+        message: "Data: {data}",
+        status: 500,
+      });
+      const err = new Err({ data: new Int32Array(100) });
+      assert.ok(err.message.includes("Int32Array("));
+      assert.ok(err.message.includes("… 50 more"));
+    });
   });
 
   describe("reserved parameter validation", () => {

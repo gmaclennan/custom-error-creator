@@ -6,11 +6,30 @@ function toPascalCase(screamingSnake) {
     .join("");
 }
 
+const MAX_ITEMS = 50;
+const MAX_STRING = 200;
+
 function inspect(value, depth = 4, seen = new WeakSet()) {
+  try {
+    return _inspect(value, depth, seen);
+  } catch {
+    return "{…}";
+  }
+}
+
+function _truncated(items, total) {
+  if (total > MAX_ITEMS) items.push(`… ${total - MAX_ITEMS} more`);
+  return items;
+}
+
+function _inspect(value, depth, seen) {
   if (value === null) return "null";
   if (value === undefined) return "undefined";
   const t = typeof value;
-  if (t === "string") return `'${value}'`;
+  if (t === "string")
+    return value.length > MAX_STRING
+      ? `'${value.slice(0, MAX_STRING)}…'`
+      : `'${value}'`;
   if (t === "number" || t === "boolean") return String(value);
   if (t === "symbol") return value.toString();
   if (t === "bigint") return `${value}n`;
@@ -26,26 +45,70 @@ function inspect(value, depth = 4, seen = new WeakSet()) {
   seen.add(value);
   let result;
   if (Array.isArray(value)) {
-    result =
-      value.length === 0
-        ? "[]"
-        : `[ ${value.map((v) => inspect(v, depth - 1, seen)).join(", ")} ]`;
+    if (value.length === 0) {
+      result = "[]";
+    } else {
+      const items = _truncated(
+        value
+          .slice(0, MAX_ITEMS)
+          .map((v) => _inspect(v, depth - 1, seen)),
+        value.length,
+      );
+      result = `[ ${items.join(", ")} ]`;
+    }
   } else if (value instanceof Map) {
-    result =
-      value.size === 0
-        ? "Map(0) {}"
-        : `Map(${value.size}) { ${[...value].map(([k, v]) => `${inspect(k, depth - 1, seen)} => ${inspect(v, depth - 1, seen)}`).join(", ")} }`;
+    if (value.size === 0) {
+      result = "Map(0) {}";
+    } else {
+      const items = [];
+      let i = 0;
+      value.forEach((v, k) => {
+        if (i++ < MAX_ITEMS)
+          items.push(
+            `${_inspect(k, depth - 1, seen)} => ${_inspect(v, depth - 1, seen)}`,
+          );
+      });
+      _truncated(items, value.size);
+      result = `Map(${value.size}) { ${items.join(", ")} }`;
+    }
   } else if (value instanceof Set) {
-    result =
-      value.size === 0
-        ? "Set(0) {}"
-        : `Set(${value.size}) { ${[...value].map((v) => inspect(v, depth - 1, seen)).join(", ")} }`;
+    if (value.size === 0) {
+      result = "Set(0) {}";
+    } else {
+      const items = [];
+      let i = 0;
+      value.forEach((v) => {
+        if (i++ < MAX_ITEMS) items.push(_inspect(v, depth - 1, seen));
+      });
+      _truncated(items, value.size);
+      result = `Set(${value.size}) { ${items.join(", ")} }`;
+    }
+  } else if (ArrayBuffer.isView(value) && typeof value.length === "number") {
+    const name = value.constructor.name;
+    if (value.length === 0) {
+      result = `${name}([])`;
+    } else {
+      const items = _truncated(
+        Array.from(value.subarray(0, MAX_ITEMS), (v) =>
+          _inspect(v, depth - 1, seen),
+        ),
+        value.length,
+      );
+      result = `${name}([ ${items.join(", ")} ])`;
+    }
   } else {
     const keys = Object.keys(value);
-    result =
-      keys.length === 0
-        ? "{}"
-        : `{ ${keys.map((k) => `${k}: ${inspect(value[k], depth - 1, seen)}`).join(", ")} }`;
+    if (keys.length === 0) {
+      result = "{}";
+    } else {
+      const items = _truncated(
+        keys
+          .slice(0, MAX_ITEMS)
+          .map((k) => `${k}: ${_inspect(value[k], depth - 1, seen)}`),
+        keys.length,
+      );
+      result = `{ ${items.join(", ")} }`;
+    }
   }
   seen.delete(value);
   return result;
