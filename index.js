@@ -6,9 +6,121 @@ function toPascalCase(screamingSnake) {
     .join("");
 }
 
+const MAX_ITEMS = 50;
+const MAX_STRING = 200;
+
+function inspect(value, depth = 4, seen = new WeakSet()) {
+  try {
+    return _inspect(value, depth, seen);
+  } catch {
+    return "{…}";
+  }
+}
+
+function _truncated(items, total) {
+  if (total > MAX_ITEMS) items.push(`… ${total - MAX_ITEMS} more`);
+  return items;
+}
+
+function _inspect(value, depth, seen) {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  const t = typeof value;
+  if (t === "string")
+    return value.length > MAX_STRING
+      ? `'${value.slice(0, MAX_STRING)}…'`
+      : `'${value}'`;
+  if (t === "number" || t === "boolean") return String(value);
+  if (t === "symbol") return value.toString();
+  if (t === "bigint") return `${value}n`;
+  if (t === "function") return `[Function: ${value.name || "anonymous"}]`;
+  // Non-recursive object types — always show regardless of depth
+  if (value instanceof Date)
+    return isNaN(value.getTime()) ? "Invalid Date" : value.toISOString();
+  if (value instanceof RegExp) return value.toString();
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+  // Depth/circular checks for recursive types
+  if (depth < 0) return Array.isArray(value) ? "[…]" : "{…}";
+  if (seen.has(value)) return "[Circular]";
+  seen.add(value);
+  let result;
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      result = "[]";
+    } else {
+      const items = _truncated(
+        value
+          .slice(0, MAX_ITEMS)
+          .map((v) => _inspect(v, depth - 1, seen)),
+        value.length,
+      );
+      result = `[ ${items.join(", ")} ]`;
+    }
+  } else if (value instanceof Map) {
+    if (value.size === 0) {
+      result = "Map(0) {}";
+    } else {
+      const items = [];
+      let i = 0;
+      value.forEach((v, k) => {
+        if (i++ < MAX_ITEMS)
+          items.push(
+            `${_inspect(k, depth - 1, seen)} => ${_inspect(v, depth - 1, seen)}`,
+          );
+      });
+      _truncated(items, value.size);
+      result = `Map(${value.size}) { ${items.join(", ")} }`;
+    }
+  } else if (value instanceof Set) {
+    if (value.size === 0) {
+      result = "Set(0) {}";
+    } else {
+      const items = [];
+      let i = 0;
+      value.forEach((v) => {
+        if (i++ < MAX_ITEMS) items.push(_inspect(v, depth - 1, seen));
+      });
+      _truncated(items, value.size);
+      result = `Set(${value.size}) { ${items.join(", ")} }`;
+    }
+  } else if (ArrayBuffer.isView(value) && typeof value.length === "number") {
+    const name = value.constructor.name;
+    if (value.length === 0) {
+      result = `${name}([])`;
+    } else {
+      const items = _truncated(
+        Array.from(value.subarray(0, MAX_ITEMS), (v) =>
+          _inspect(v, depth - 1, seen),
+        ),
+        value.length,
+      );
+      result = `${name}([ ${items.join(", ")} ])`;
+    }
+  } else {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      result = "{}";
+    } else {
+      const items = _truncated(
+        keys
+          .slice(0, MAX_ITEMS)
+          .map((k) => `${k}: ${_inspect(value[k], depth - 1, seen)}`),
+        keys.length,
+      );
+      result = `{ ${items.join(", ")} }`;
+    }
+  }
+  seen.delete(value);
+  return result;
+}
+
 function interpolate(template, params) {
   return template.replace(/\{(\w+)\}/g, (match, key) =>
-    key in params ? params[key] : match,
+    key in params
+      ? typeof params[key] === "string"
+        ? params[key]
+        : inspect(params[key])
+      : match,
   );
 }
 
