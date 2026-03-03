@@ -143,6 +143,8 @@ export function createErrorClass(definition) {
 
   validateMessage(code, defaultMessage);
 
+  const hasTemplateParams = /\{\w+\}/.test(defaultMessage);
+
   const ErrorKlass = class extends Error {
     code = code;
     status = status;
@@ -155,9 +157,14 @@ export function createErrorClass(definition) {
       let params, cause;
 
       if (typeof messageOrParams === "object" && messageOrParams !== null) {
-        // First arg is params object: new Err(params) or new Err(params, opts)
-        params = messageOrParams;
-        cause = paramsOrOpts?.cause;
+        if (!hasTemplateParams && "cause" in messageOrParams) {
+          // No-param error: first arg is ErrorOpts
+          cause = messageOrParams.cause;
+        } else {
+          // First arg is params object: new Err(params) or new Err(params, opts)
+          params = messageOrParams;
+          cause = paramsOrOpts?.cause;
+        }
       } else if (typeof paramsOrOpts === "object" && paramsOrOpts !== null) {
         if (opts !== undefined) {
           // Three-arg form: new Err("msg", params, opts)

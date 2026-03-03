@@ -64,6 +64,7 @@ export type ErrorConstructor<Def extends ErrorDefinition> = (HasParams<
     }
   : {
       new (): ErrorInstance<Def>;
+      new (opts: ErrorOpts): ErrorInstance<Def>;
       new (message: string): ErrorInstance<Def>;
       new (message: string | undefined, opts: ErrorOpts): ErrorInstance<Def>;
     }) & {
